@@ -23,9 +23,8 @@
  */
 package ss.platform.api.dao;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Enumeration;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Entity search request.
@@ -43,37 +42,36 @@ public class EntitySearchRequest {
     private String order;
     /** Order by field. */
     private String orderBy;
-    /** Filter parameters, key is field name, value is field value. */
-    private List<FilterCondition> filter;
-    /** Ignore count request. Required for optimization. */
-    private boolean ignoreCount;
-    /** Show deactivated records. */
-    private boolean showDeactivated;
     // =========================================== ACTIONS ============================================================
     /**
      * Create new request.
+     * @param request HTTP request.
      * @return new search request.
      */
-    public static EntitySearchRequest createRequest() {
-        EntitySearchRequest request = new EntitySearchRequest();
-        request.setPage(1);
-        request.setPageSize(DEFAULT_LIMIT);
-        request.setFilter(new ArrayList<>());
-        request.setIgnoreCount(true);
-        return request;
-    }
-    /**
-     * Add filter.
-     * @param predicates filter predicates.
-     * @param operator filter operator.
-     * @return search request.
-     */
-    public EntitySearchRequest addFilter(FilterPredicate[] predicates, JPABoolConditionOperator operator) {
-        FilterCondition condition = new FilterCondition();
-        condition.setOperator(JPABoolConditionOperator.OR);
-        condition.setPredicates(Arrays.asList(predicates));
-        this.getFilter().add(condition);
-        return this;
+    public static EntitySearchRequest createRequest(HttpServletRequest request) {
+        EntitySearchRequest searchRequest = new EntitySearchRequest();
+        Enumeration enumeration = request.getParameterNames();
+        while(enumeration.hasMoreElements()){
+            String parameterName = enumeration.nextElement().toString();
+            String value = request.getParameter(parameterName);
+            switch (parameterName) {
+                case "page":
+                    searchRequest.setPage(Integer.valueOf(value));
+                    break;
+                case "page_size":
+                    searchRequest.setPageSize(Integer.valueOf(value));
+                    break;
+                case "order":
+                    searchRequest.setOrder(value);
+                    break;
+                case "order_by":
+                    searchRequest.setOrderBy(value);
+                    break;
+                default:
+                    break;
+            }
+        }
+        return searchRequest;
     }
     // =========================================== SET & GET ==========================================================
     /**
@@ -123,152 +121,5 @@ public class EntitySearchRequest {
      */
     public void setOrderBy(String orderBy) {
         this.orderBy = orderBy;
-    }
-    /**
-     * @return the filter
-     */
-    public List<FilterCondition> getFilter() {
-        return filter;
-    }
-    /**
-     * @param filter the filter to set
-     */
-    public void setFilter(List<FilterCondition> filter) {
-        this.filter = filter;
-    }
-    /**
-     * @return the ignoreCount
-     */
-    public boolean isIgnoreCount() {
-        return ignoreCount;
-    }
-    /**
-     * @param ignoreCount the ignoreCount to set
-     */
-    public void setIgnoreCount(boolean ignoreCount) {
-        this.ignoreCount = ignoreCount;
-    }
-    /**
-     * @return the showDeactivated
-     */
-    public boolean isShowDeactivated() {
-        return showDeactivated;
-    }
-    /**
-     * @param showDeactivated the showDeactivated to set
-     */
-    public void setShowDeactivated(boolean showDeactivated) {
-        this.showDeactivated = showDeactivated;
-    }
-    /**
-     * Filter condition.
-     * Contains predicates / inner conditions which are combined by common boolean operator.
-     */
-    public static class FilterCondition {
-        /** Predicates. */
-        private List<FilterPredicate> predicates;
-        /** Inner conditions. */
-        private List<FilterCondition> conditions;
-        /** Operator. */
-        private JPABoolConditionOperator operator;
-        /**
-         * @return the predicates
-         */
-        public List<FilterPredicate> getPredicates() {
-            return predicates;
-        }
-        /**
-         * @param predicates the predicates to set
-         */
-        public void setPredicates(List<FilterPredicate> predicates) {
-            this.predicates = predicates;
-        }
-        /**
-         * @return the operator
-         */
-        public JPABoolConditionOperator getOperator() {
-            return operator;
-        }
-        /**
-         * @param operator the operator to set
-         */
-        public void setOperator(JPABoolConditionOperator operator) {
-            this.operator = operator;
-        }
-        /**
-         * @return the conditions
-         */
-        public List<FilterCondition> getConditions() {
-            return conditions;
-        }
-        /**
-         * @param conditions the conditions to set
-         */
-        public void setConditions(List<FilterCondition> conditions) {
-            this.conditions = conditions;
-        }
-    }
-    /**
-     * Filter predicate, pair field name-value plus operator for comparison.
-     */
-    public static class FilterPredicate {
-        /** Field name. */
-        private String field;
-        /** Value */
-        private Object value;
-        /** Operator. */
-        private JPAComparisonOperator operator;
-        /**
-         * Constructor.
-         */
-        public FilterPredicate() {
-        }
-        /**
-         * Constructor.
-         * @param field field.
-         * @param operator operator.
-         * @param value value.
-         */
-        public FilterPredicate(String field, JPAComparisonOperator operator, Object value) {
-            this.field = field;
-            this.operator = operator;
-            this.value= value;
-        }
-        /**
-         * @return the field
-         */
-        public String getField() {
-            return field;
-        }
-        /**
-         * @param field the field to set
-         */
-        public void setField(String field) {
-            this.field = field;
-        }
-        /**
-         * @return the value
-         */
-        public Object getValue() {
-            return value;
-        }
-        /**
-         * @param value the value to set
-         */
-        public void setValue(Object value) {
-            this.value = value;
-        }
-        /**
-         * @return the operator
-         */
-        public JPAComparisonOperator getOperator() {
-            return operator;
-        }
-        /**
-         * @param operator the operator to set
-         */
-        public void setOperator(JPAComparisonOperator operator) {
-            this.operator = operator;
-        }
     }
 }

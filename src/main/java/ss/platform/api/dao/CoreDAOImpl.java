@@ -96,16 +96,14 @@ class CoreDAOImpl implements CoreDAO {
                 .setMaxResults(searchRequest.getPageSize()).getResultList();
         response.setData(entities);
         // entities count
-        if (!searchRequest.isIgnoreCount()) {
-            CriteriaQuery<Long> criteriaCount = cb.createQuery(Long.class);
-            Root<T> cCount = criteriaCount.from(cl);
-            Expression<Long> sum = cb.count(cCount);
-            predicates = createSearchCriteria(cb, cCount, cl, searchRequest);
-            criteriaCount.select(sum).where(predicates.toArray(new Predicate[0]));
-            List<Long> maxList = em.createQuery(criteriaCount).getResultList();
-            Long count = maxList.iterator().next();
-            response.setTotal(count == null ? 0 : Integer.valueOf(String.valueOf(count)));
-        }
+        CriteriaQuery<Long> criteriaCount = cb.createQuery(Long.class);
+        Root<T> cCount = criteriaCount.from(cl);
+        Expression<Long> sum = cb.count(cCount);
+        predicates = createSearchCriteria(cb, cCount, cl, searchRequest);
+        criteriaCount.select(sum).where(predicates.toArray(new Predicate[0]));
+        List<Long> maxList = em.createQuery(criteriaCount).getResultList();
+        Long count = maxList.iterator().next();
+        response.setTotal(count == null ? 0 : Integer.valueOf(String.valueOf(count)));
         return response;
     }
     // =========================================== PRIVATE ============================================================
