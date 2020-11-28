@@ -23,7 +23,6 @@
  */
 package ss.platform.api.dao;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -31,7 +30,7 @@ import java.util.List;
  * @author ss
  * @param <T>  entity type.
  */
-public class EntitySearchResponse <T extends Serializable> {
+public class EntitySearchResponse <T extends DataModel> {
     // ================================================== FIELDS ======================================================
     /** Total records. */
     private int total;

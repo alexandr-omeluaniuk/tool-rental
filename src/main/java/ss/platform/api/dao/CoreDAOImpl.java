@@ -16,9 +16,6 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.From;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import org.springframework.stereotype.Repository;
@@ -80,7 +77,7 @@ class CoreDAOImpl implements CoreDAO {
     @Transactional(propagation = Propagation.SUPPORTS)
     public <T extends DataModel> EntitySearchResponse searchEntities(Class<T> cl, EntitySearchRequest searchRequest)
             throws Exception {
-        EntitySearchResponse response = new EntitySearchResponse();
+        EntitySearchResponse<T> response = new EntitySearchResponse<>();
         // entities data
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<T> criteria = cb.createQuery(cl);
@@ -115,51 +112,6 @@ class CoreDAOImpl implements CoreDAO {
     private <T extends DataModel> List<Predicate> createSearchCriteria(CriteriaBuilder cb, Root<T> c, Class<T> clazz,
             EntitySearchRequest searchRequest) throws Exception {
         List<Predicate> predicates = new ArrayList<>();
-        Optional.ofNullable(searchRequest.getFilter()).ifPresent((filter) -> {
-            filter.forEach((f) -> {
-                predicates.add(fromFilter(f, cb, c));
-            });
-        });
         return predicates;
-    }
-    
-    private Predicate fromFilter(EntitySearchRequest.FilterCondition filter, CriteriaBuilder cb, Root c) {
-        List<Predicate> innerPredicates = new ArrayList<>();
-        filter.getPredicates().forEach((filterPredicate) -> {
-            Path path;
-            if (filterPredicate.getField().contains(".")) {
-                From from = c;
-                String[] pathParts = filterPredicate.getField().split("\\.");
-                for (int i = 0; i < pathParts.length - 1; i++) {
-                    from = c.join(pathParts[i], JoinType.LEFT);
-                }
-                path = from.get(pathParts[pathParts.length - 1]);
-            } else {
-                path = c.get(filterPredicate.getField());
-            }
-            if (JPAComparisonOperator.EQUALS.equals(filterPredicate.getOperator())) {
-                innerPredicates.add(cb.equal(path, filterPredicate.getValue()));
-            } else if (JPAComparisonOperator.LIKE.equals(filterPredicate.getOperator())) {
-                innerPredicates.add(cb.like(path, String.valueOf(filterPredicate.getValue())));
-            } else if (JPAComparisonOperator.GREATER_THAN_OR_EQUAL_TO.equals(filterPredicate.getOperator())) {
-                innerPredicates.add(cb.greaterThanOrEqualTo(path,
-                        (Comparable) filterPredicate.getValue()));
-            } else if (JPAComparisonOperator.LESS_THAN_OR_EQUAL_TO.equals(filterPredicate.getOperator())) {
-                innerPredicates.add(cb.lessThanOrEqualTo(path,
-                        (Comparable) filterPredicate.getValue()));
-            }
-        });
-        Optional.ofNullable(filter.getConditions()).ifPresent((conditions) -> {
-            conditions.forEach((cond) -> {
-                innerPredicates.add(fromFilter(filter, cb, c));
-            });
-        });
-        if (JPABoolConditionOperator.AND.equals(filter.getOperator())) {
-            return cb.and(innerPredicates.toArray(new Predicate[0]));
-        } else if (JPABoolConditionOperator.OR.equals(filter.getOperator())) {
-            return cb.or(innerPredicates.toArray(new Predicate[0]));
-        } else {
-            throw new RuntimeException("Boolean operator for filter condition is required!");
-        }
     }
 }
